@@ -31,9 +31,9 @@ impl Contributor {
 /// Fundraiser:
 /// > Maker: Pubkey
 /// > Mint to Raise: Pubkey
+/// > Time Started: i64
 /// > Amount to Raise: u64
 /// > Current Amount: u64
-/// > Time Started: i64
 /// > Duration: u8
 
 pub struct Fundraiser(*const u8);
@@ -60,19 +60,19 @@ impl Fundraiser {
         unsafe { *(self.0.add(32) as *const Pubkey) }
     }
 
-    pub fn amount_to_raise(&self) -> u64 {
-        unsafe { core::ptr::read_unaligned(self.0.add(64) as *const u64) }
+    pub fn time_started(&self) -> i64 {
+        unsafe { core::ptr::read_unaligned(self.0.add(64) as *const i64) }
     }
 
-    pub fn current_amount(&self) -> u64 {
+    pub fn amount_to_raise(&self) -> u64 {
         unsafe { core::ptr::read_unaligned(self.0.add(72) as *const u64) }
     }
 
-    pub fn time_started(&self) -> i64 {
-        unsafe { core::ptr::read_unaligned(self.0.add(80) as *const i64) }
+    pub fn current_amount(&self) -> u64 {
+        unsafe { core::ptr::read_unaligned(self.0.add(80) as *const u64) }
     }
 
     pub fn duration(&self) -> u8 {
-        unsafe { self.0.add(88) as u8 }
+        unsafe { core::ptr::read_unaligned(self.0.add(88) as *const u8) }
     }
 }
