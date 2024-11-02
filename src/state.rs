@@ -37,7 +37,7 @@ impl Contributor {
 pub struct Fundraiser(*const u8);
 
 impl Fundraiser {
-    pub const LEN: usize = 88;
+    pub const LEN: usize = 80;
 
     #[inline(always)]
     pub fn from_account_info_unchecked(account_info: &AccountInfo) -> Self {
@@ -59,10 +59,10 @@ impl Fundraiser {
     }
 
     pub fn time_ending(&self) -> i64 {
-        unsafe { core::ptr::read_unaligned(self.0.add(64) as *const i64) }
+        unsafe { *(self.0.add(64) as *const i64) }
     }
 
     pub fn amount_to_raise(&self) -> u64 {
-        unsafe { core::ptr::read_unaligned(self.0.add(72) as *const u64) }
+        unsafe { *(self.0.add(72) as *const u64) }
     }
 }

@@ -6,10 +6,8 @@ use pinocchio::{
 };
 use pinocchio_token::instructions::InitilizeAccount3;
 
-use crate::state::Fundraiser;
-
 pub fn initialize(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
-    let [fundraiser, mint, vault] = accounts else {
+    let [fundraiser, mint, vault, _token_program] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
@@ -19,15 +17,14 @@ pub fn initialize(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
         .split_first()
         .ok_or(ProgramError::InvalidInstructionData)?;
 
-    // Copy mint_to_raise key
     unsafe {
-        *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr() as *mut [u8; 32]) = *mint.key()
-    };
+        let data_ptr = fundraiser.borrow_mut_data_unchecked().as_mut_ptr();
 
-    // Copy everything after mint_to_raise
-    unsafe {
-        *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr().add(32) as *mut [u8; 56]) =
-            *(data.as_ptr().add(32) as *const [u8; 56]);
+        // Copy `mint_to_raise` key to the first 32 bytes of `fundraiser`
+        *(data_ptr as *mut [u8; 32]) = *mint.key();
+
+        // Copy the remaining `data` bytes after the first 32 bytes in `fundraiser`
+        *(data_ptr.add(32) as *mut [u8; 56]) = *(data.as_ptr() as *const [u8; 56]);
     }
 
     let binding = bump.to_le_bytes();
