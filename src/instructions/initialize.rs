@@ -1,21 +1,40 @@
 use pinocchio::{
-    account_info::AccountInfo, program_error::ProgramError, ProgramResult
+    account_info::AccountInfo, program_error::ProgramError, ProgramResult, instruction::{Seed, Signer}
 };
+use pinocchio_token::instructions::InitilizeAccount3;
 
 use crate::state::Fundraiser;
 
 pub fn initialize(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
-    let [fundraiser, _system_program] = accounts else {
+    let [fundraiser, mint, vault] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
     assert!(fundraiser.is_signer());
 
-    // Fill the fundraiser account with the data
+    let (bump, data) = data
+        .split_first()
+        .ok_or(ProgramError::InvalidInstructionData)?;
+
+    // Copy mint_to_raise key
+    unsafe { *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr() as *mut [u8; 32]) = *mint.key() };
+
+    // Copy everything after mint_to_raise
     unsafe {
-        *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr() as *mut [u8; Fundraiser::LEN]) =
-            *(data.as_ptr() as *const [u8; Fundraiser::LEN]);
+        *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr().add(32) as *mut [u8; Fundraiser::LEN - 32]) =
+            *(data.as_ptr().add(32) as *const [u8; Fundraiser::LEN - 32]);
     }
+
+    let binding = bump.to_le_bytes();
+    let seeds = [Seed::from(fundraiser.key().as_ref()), Seed::from(&binding)];
+    let signer = [Signer::from(&seeds)];
+
+    // Create a Derived TA for the vault
+    InitilizeAccount3 {
+        token: vault,
+        owner: fundraiser.key(),
+        mint,
+    }.invoke_signed(&signer)?;
 
     Ok(())
 }

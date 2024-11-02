@@ -39,7 +39,7 @@ impl Contributor {
 pub struct Fundraiser(*const u8);
 
 impl Fundraiser {
-    pub const LEN: usize = 89;
+    pub const LEN: usize = 88;
 
     #[inline(always)]
     pub fn from_account_info_unchecked(account_info: &AccountInfo) -> Self {
@@ -52,27 +52,19 @@ impl Fundraiser {
         Self::from_account_info_unchecked(account_info)
     }
 
-    pub fn maker(&self) -> Pubkey {
+    pub fn mint_to_raise(&self) -> Pubkey {
         unsafe { *(self.0 as *const Pubkey) }
     }
 
-    pub fn mint_to_raise(&self) -> Pubkey {
+    pub fn maker(&self) -> Pubkey {
         unsafe { *(self.0.add(32) as *const Pubkey) }
     }
 
-    pub fn time_started(&self) -> i64 {
+    pub fn time_ending(&self) -> i64 {
         unsafe { core::ptr::read_unaligned(self.0.add(64) as *const i64) }
     }
 
     pub fn amount_to_raise(&self) -> u64 {
         unsafe { core::ptr::read_unaligned(self.0.add(72) as *const u64) }
-    }
-
-    pub fn current_amount(&self) -> u64 {
-        unsafe { core::ptr::read_unaligned(self.0.add(80) as *const u64) }
-    }
-
-    pub fn duration(&self) -> u8 {
-        unsafe { core::ptr::read_unaligned(self.0.add(88) as *const u8) }
     }
 }

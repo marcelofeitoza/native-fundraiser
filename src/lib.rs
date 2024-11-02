@@ -32,6 +32,6 @@ fn process_instruction(
         FundraiserInstruction::Initialize => initialize(accounts, data),
         FundraiserInstruction::Contribute => contribute(accounts, data),
         FundraiserInstruction::Checker => checker(accounts, [data[0]]),
-        FundraiserInstruction::Refund => refund(accounts, data),
+        FundraiserInstruction::Refund => refund(accounts, [data[0]]),
     }
 }

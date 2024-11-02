@@ -8,7 +8,7 @@ use pinocchio_token::{
 use crate::state::Fundraiser;
 
 pub fn checker(accounts: &[AccountInfo], bump: [u8;1]) -> ProgramResult {
-    let [_cranker, fundraiser, vault, authority, maker_ta, _token_program] = accounts else {
+    let [_cranker, fundraiser, vault, maker_ta, _token_program] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
@@ -35,9 +35,9 @@ pub fn checker(accounts: &[AccountInfo], bump: [u8;1]) -> ProgramResult {
     Transfer {
         from: vault,
         to: maker_ta,
-        authority,
+        authority: vault,
         amount,
-    }.invoke_signed(&signer);
+    }.invoke_signed(&signer)?;
 
     Ok(())
 }

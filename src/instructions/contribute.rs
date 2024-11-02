@@ -1,47 +1,45 @@
-use pinocchio::{account_info::AccountInfo, pubkey::Pubkey, ProgramResult};
+use pinocchio::{account_info::AccountInfo, ProgramResult};
 use pinocchio_token::state::TokenAccount;
 use chrono::Utc;
 
+use crate::state::{Fundraiser, Contributor};
+
 pub fn contribute(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
 
-    let [
-        contributor, 
-        mint_to_raise, 
-        fundraiser, 
-        contributor_account, 
-        contributor_ta, 
-        vault, 
+    let [contributor, fundraiser, contributor_account, contributor_ta, vault, 
         _token_program, 
-        _system_program
     ] = accounts else {
         return Err(pinocchio::program_error::ProgramError::NotEnoughAccountKeys)
     };
 
-    assert!(contributor.is_signer());
+    let fundraiser_account = Fundraiser::from_account_info(fundraiser);
+    let vault_account = unsafe { TokenAccount::from_account_info_unsafe(vault) };
+   
+    assert_eq!(fundraiser_account.mint_to_raise(), vault_account.mint());
+    assert_eq!(&vault_account.authority(), fundraiser.key());
 
-    let mint: Pubkey;
+    let amount = unsafe { *(data.as_ptr() as *const u64) }; 
+
+    if contributor_account.data_len() != 0 {
+        unsafe {
+            *(contributor.borrow_mut_data_unchecked().as_mut_ptr() as *mut [u8; Contributor::LEN]) = 
+                (Contributor::from_account_info(contributor_account).amount() + amount).to_le_bytes();
+        }
+    } else {
+        unsafe {
+            *(contributor.borrow_mut_data_unchecked().as_mut_ptr() as *mut [u8; Contributor::LEN]) = amount.to_le_bytes();
+        }
+    }
 
     let current_time = Utc::now().timestamp();
-    // ((fundraiser.durations <= current_time - fundraiser.timestarted) / 86400) as u8,
-    unsafe {
-        let amount = *(data.as_ptr() as *const u64);
-        mint = Pubkey::default();// todo! Get getter from fundraiser
-        assert_eq!(&mint, mint_to_raise.key());
+    assert!(fundraiser_account.time_ending() > current_time);
 
-        let contributor_ata = TokenAccount::from_account_info_unchecked_unsafe(contributor_ta);
-        assert_eq!(&contributor_ata.mint(), mint_to_raise.key());
-        assert_eq!(&contributor_ata.authority(), fundraiser.key());
-
-        // contributor_account.amount <= (fundraiser.amount_to_raise * 10u64) / 100u64
-        // contributor_account.amount + amount <= (fundraiser.amount_to_raise * 10u64) / 100u64)
-
-        pinocchio_token::instructions::Transfer {
-            from: contributor_ta,
-            to: vault,
-            authority: contributor,
-            amount,
-        }.invoke()?;
-    }
+    pinocchio_token::instructions::Transfer {
+        from: contributor_ta,
+        to: vault,
+        authority: contributor,
+        amount,
+    }.invoke()?;
     
     Ok(())
 }
