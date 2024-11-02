@@ -3,6 +3,7 @@ mod tests;
 
 mod state;
 mod instructions;
+use instructions::FundraiserInstruction;
 use instructions::{initialize::initialize, contribute::contribute, checker::checker, refund::refund};
 
 use pinocchio::account_info::AccountInfo;
@@ -27,10 +28,10 @@ fn process_instruction(
         .split_first()
         .ok_or(ProgramError::InvalidInstructionData)?;
 
-    match FunraiserInstruction::try_from(discriminator)? {
-        FunraiserInstruction::Initialize => initialize(accounts, data),
-        FunraiserInstruction::Contribute => contribute(accounts, data),
-        FunraiserInstruction::Checker => checker(accounts, data),
-        FunraiserInstruction::Refund => refund(accounts, data),
+    match FundraiserInstruction::try_from(discriminator)? {
+        FundraiserInstruction::Initialize => initialize(accounts, data),
+        FundraiserInstruction::Contribute => contribute(accounts, data),
+        FundraiserInstruction::Checker => checker(accounts),
+        FundraiserInstruction::Refund => refund(accounts, data),
     }
 }
