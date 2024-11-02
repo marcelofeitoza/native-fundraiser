@@ -3,17 +3,15 @@ mod tests {
     use mollusk_svm::{program, result::Check, Mollusk};
 
     use solana_sdk::{
-        account::{Account, AccountSharedData, ReadableAccount, WritableAccount},
+        account::{AccountSharedData, WritableAccount},
         instruction::{AccountMeta, Instruction},
         program_option::COption,
         program_pack::Pack,
         pubkey::Pubkey,
     };
 
-    use spl_token::state::{Account, AccountState};
-
     use crate::state::Fundraiser;
-    
+
     #[test]
     fn initialize() {
         let program_id = Pubkey::new_from_array(five8_const::decode_32_const(
@@ -36,11 +34,17 @@ mod tests {
         // Accounts
         let fundraiser = Pubkey::new_unique();
         let mint = Pubkey::new_unique();
-        let (vault, bump) = 
-            Pubkey::find_program_address(&[&fundraiser.to_bytes()], &program_id);
+        let (vault, bump) = Pubkey::find_program_address(&[&fundraiser.to_bytes()], &program_id);
 
         // Data
-        let data = [vec![0], vec![bump], Pubkey::new_unique().to_bytes().to_vec(), i64::MAX.to_le_bytes().to_vec(), 1_000_000u64.to_le_bytes().to_vec()].concat();
+        let data = [
+            vec![0],
+            vec![bump],
+            Pubkey::new_unique().to_bytes().to_vec(),
+            i64::MAX.to_le_bytes().to_vec(),
+            1_000_000u64.to_le_bytes().to_vec(),
+        ]
+        .concat();
 
         let mut mint_account = AccountSharedData::new(
             mollusk
@@ -52,14 +56,15 @@ mod tests {
         );
         solana_sdk::program_pack::Pack::pack(
             spl_token::state::Mint {
-                mint_authority: COption::Some(new_authority),
+                mint_authority: COption::None,
                 supply: 1_000_000,
                 decimals: 6,
                 is_initialized: true,
-                freeze_authority: COption::Some(authority),
+                freeze_authority: COption::None,
             },
-            new_mint_account.data_as_mut_slice(),
-        ).unwrap();
+            mint_account.data_as_mut_slice(),
+        )
+        .unwrap();
 
         // Instruction
         let instruction = Instruction::new_with_bytes(
@@ -75,17 +80,26 @@ mod tests {
         mollusk.process_and_validate_instruction(
             &instruction,
             &vec![
-                (fundraiser, AccountSharedData::new(
-                    mollusk.sysvars.rent.minimum_balance(Escrow::LEN), 
-                    0, 
-                    &program_id,
-                )),
+                (
+                    fundraiser,
+                    AccountSharedData::new(
+                        mollusk.sysvars.rent.minimum_balance(Fundraiser::LEN),
+                        Fundraiser::LEN,
+                        &program_id,
+                    ),
+                ),
                 (mint, mint_account),
-                (vault, AccountSharedData::new(
-                    mollusk.sysvars.rent.minimum_balance(spl_token::state::Account::LEN), 
-                    0, 
-                    &program_id,
-                )),
+                (
+                    vault,
+                    AccountSharedData::new(
+                        mollusk
+                            .sysvars
+                            .rent
+                            .minimum_balance(spl_token::state::Account::LEN),
+                        spl_token::state::Account::LEN,
+                        &program_id,
+                    ),
+                ),
             ],
             &[Check::success()],
         );

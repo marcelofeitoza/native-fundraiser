@@ -26,9 +26,8 @@ pub fn initialize(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
 
     // Copy everything after mint_to_raise
     unsafe {
-        *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr().add(32)
-            as *mut [u8; Fundraiser::LEN - 32]) =
-            *(data.as_ptr().add(32) as *const [u8; Fundraiser::LEN - 32]);
+        *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr().add(32) as *mut [u8; 56]) =
+            *(data.as_ptr().add(32) as *const [u8; 56]);
     }
 
     let binding = bump.to_le_bytes();
