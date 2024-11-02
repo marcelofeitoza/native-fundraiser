@@ -31,7 +31,7 @@ fn process_instruction(
     match FundraiserInstruction::try_from(discriminator)? {
         FundraiserInstruction::Initialize => initialize(accounts, data),
         FundraiserInstruction::Contribute => contribute(accounts, data),
-        FundraiserInstruction::Checker => checker(accounts),
+        FundraiserInstruction::Checker => checker(accounts, [data[0]]),
         FundraiserInstruction::Refund => refund(accounts, data),
     }
 }
