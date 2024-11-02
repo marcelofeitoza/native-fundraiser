@@ -29,12 +29,10 @@ impl Contributor {
 /// # State
 ///
 /// Fundraiser:
-/// > Maker: Pubkey
 /// > Mint to Raise: Pubkey
-/// > Time Started: i64
+/// > Maker: Pubkey
+/// > Time Ending: i64
 /// > Amount to Raise: u64
-/// > Current Amount: u64
-/// > Duration: u8
 
 pub struct Fundraiser(*const u8);
 
