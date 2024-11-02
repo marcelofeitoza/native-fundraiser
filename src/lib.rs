@@ -1,14 +1,32 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
-
 #[cfg(test)]
-mod tests {
-    use super::*;
+mod tests;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+mod instructions;
+use instructions::{initialize::initialize, contribute::contribute, checker::checker, refund::refund};
+
+use pinocchio::account_info::AccountInfo;
+use pinocchio::entrypoint;
+use pinocchio::program_error::ProgramError;
+use pinocchio::pubkey::Pubkey;
+use pinocchio::ProgramResult;
+
+entrypoint!(process_instruction);
+
+pub const PDA_MARKER: &[u8; 21] = b"ProgramDerivedAddress";
+
+fn process_instruction(
+    _program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    instruction_data: &[u8],
+) -> ProgramResult {
+    let (discriminator, data) = instruction_data
+        .split_first()
+        .ok_or(ProgramError::InvalidInstructionData)?;
+
+    match FunraiserInstruction::try_from(discriminator)? {
+        FunraiserInstruction::Initialize => initialize(accounts, data),
+        FunraiserInstruction::Contribute => contribute(accounts, data),
+        FunraiserInstruction::Checker => checker(accounts, data),
+        FunraiserInstruction::Refund => refund(accounts, data),
     }
 }
