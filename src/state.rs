@@ -1,7 +1,7 @@
 use pinocchio::{account_info::AccountInfo, pubkey::Pubkey};
 
 /// # State
-/// 
+///
 /// Contributor:
 /// > Amount: u64
 
@@ -27,7 +27,7 @@ impl Contributor {
 }
 
 /// # State
-/// 
+///
 /// Fundraiser:
 /// > Maker: Pubkey
 /// > Mint to Raise: Pubkey

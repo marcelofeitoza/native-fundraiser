@@ -1,5 +1,8 @@
 use pinocchio::{
-    account_info::AccountInfo, program_error::ProgramError, ProgramResult, instruction::{Seed, Signer}
+    account_info::AccountInfo,
+    instruction::{Seed, Signer},
+    program_error::ProgramError,
+    ProgramResult,
 };
 use pinocchio_token::instructions::InitilizeAccount3;
 
@@ -17,11 +20,14 @@ pub fn initialize(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
         .ok_or(ProgramError::InvalidInstructionData)?;
 
     // Copy mint_to_raise key
-    unsafe { *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr() as *mut [u8; 32]) = *mint.key() };
+    unsafe {
+        *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr() as *mut [u8; 32]) = *mint.key()
+    };
 
     // Copy everything after mint_to_raise
     unsafe {
-        *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr().add(32) as *mut [u8; Fundraiser::LEN - 32]) =
+        *(fundraiser.borrow_mut_data_unchecked().as_mut_ptr().add(32)
+            as *mut [u8; Fundraiser::LEN - 32]) =
             *(data.as_ptr().add(32) as *const [u8; Fundraiser::LEN - 32]);
     }
 
@@ -34,7 +40,8 @@ pub fn initialize(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
         token: vault,
         owner: fundraiser.key(),
         mint,
-    }.invoke_signed(&signer)?;
+    }
+    .invoke_signed(&signer)?;
 
     Ok(())
 }

@@ -1,12 +1,18 @@
 use chrono::Utc;
-use pinocchio::{account_info::AccountInfo, instruction::{Seed, Signer}, ProgramResult};
+use pinocchio::{
+    account_info::AccountInfo,
+    instruction::{Seed, Signer},
+    ProgramResult,
+};
 use pinocchio_token::state::TokenAccount;
 
-use crate::state::{Fundraiser, Contributor};
+use crate::state::{Contributor, Fundraiser};
 
-pub fn refund(accounts: &[AccountInfo], bump:  [u8; 1]) -> ProgramResult {
-    let [contributor, fundraiser, contributor_account, contributor_ta, vault, _token_program ] = accounts else {
-        return Err(pinocchio::program_error::ProgramError::NotEnoughAccountKeys)
+pub fn refund(accounts: &[AccountInfo], bump: [u8; 1]) -> ProgramResult {
+    let [contributor, fundraiser, contributor_account, contributor_ta, vault, _token_program] =
+        accounts
+    else {
+        return Err(pinocchio::program_error::ProgramError::NotEnoughAccountKeys);
     };
 
     assert!(contributor.is_signer());
@@ -24,13 +30,14 @@ pub fn refund(accounts: &[AccountInfo], bump:  [u8; 1]) -> ProgramResult {
 
     let seeds = [Seed::from(fundraiser.key().as_ref()), Seed::from(&bump)];
     let signer = [Signer::from(&seeds)];
-    
+
     pinocchio_token::instructions::Transfer {
         from: vault,
         to: contributor_ta,
         authority: vault,
         amount: Contributor::from_account_info(contributor_account).amount(),
-    }.invoke_signed(&signer)?;
+    }
+    .invoke_signed(&signer)?;
 
     unsafe {
         let lamports = contributor_account.borrow_lamports_unchecked();
@@ -39,7 +46,6 @@ pub fn refund(accounts: &[AccountInfo], bump:  [u8; 1]) -> ProgramResult {
 
         contributor.realloc(0, true)?;
     }
-
 
     Ok(())
 }

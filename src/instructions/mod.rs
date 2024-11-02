@@ -1,8 +1,8 @@
 use pinocchio::program_error::ProgramError;
 
-pub mod initialize;
-pub mod contribute;
 pub mod checker;
+pub mod contribute;
+pub mod initialize;
 pub mod refund;
 
 #[derive(Clone, Copy, Debug)]

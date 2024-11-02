@@ -1,13 +1,14 @@
 use pinocchio::{
-    account_info::AccountInfo, program_error::ProgramError, ProgramResult, instruction::{Seed, Signer}
+    account_info::AccountInfo,
+    instruction::{Seed, Signer},
+    program_error::ProgramError,
+    ProgramResult,
 };
-use pinocchio_token::{
-    state::TokenAccount, instructions::Transfer
-};
+use pinocchio_token::{instructions::Transfer, state::TokenAccount};
 
 use crate::state::Fundraiser;
 
-pub fn checker(accounts: &[AccountInfo], bump: [u8;1]) -> ProgramResult {
+pub fn checker(accounts: &[AccountInfo], bump: [u8; 1]) -> ProgramResult {
     let [_cranker, fundraiser, vault, maker_ta, _token_program] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
     };
@@ -15,7 +16,9 @@ pub fn checker(accounts: &[AccountInfo], bump: [u8;1]) -> ProgramResult {
     let fundraiser_account = Fundraiser::from_account_info(fundraiser);
 
     // Check that the owner of the vault is the maker
-    assert_eq!(&fundraiser_account.maker(), unsafe { &TokenAccount::from_account_info_unsafe(maker_ta).authority() });
+    assert_eq!(&fundraiser_account.maker(), unsafe {
+        &TokenAccount::from_account_info_unsafe(maker_ta).authority()
+    });
 
     let vault_account = unsafe { TokenAccount::from_account_info_unsafe(vault) };
     // Save the current amount of the vault
@@ -37,7 +40,8 @@ pub fn checker(accounts: &[AccountInfo], bump: [u8;1]) -> ProgramResult {
         to: maker_ta,
         authority: vault,
         amount,
-    }.invoke_signed(&signer)?;
+    }
+    .invoke_signed(&signer)?;
 
     Ok(())
 }

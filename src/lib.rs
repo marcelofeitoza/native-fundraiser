@@ -1,10 +1,12 @@
 #[cfg(test)]
 mod tests;
 
-mod state;
 mod instructions;
+mod state;
 use instructions::FundraiserInstruction;
-use instructions::{initialize::initialize, contribute::contribute, checker::checker, refund::refund};
+use instructions::{
+    checker::checker, contribute::contribute, initialize::initialize, refund::refund,
+};
 
 use pinocchio::account_info::AccountInfo;
 use pinocchio::entrypoint;
