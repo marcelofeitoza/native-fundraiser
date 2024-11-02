@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests;
 
+mod state;
 mod instructions;
 use instructions::{initialize::initialize, contribute::contribute, checker::checker, refund::refund};
 
@@ -13,6 +14,9 @@ use pinocchio::ProgramResult;
 entrypoint!(process_instruction);
 
 pub const PDA_MARKER: &[u8; 21] = b"ProgramDerivedAddress";
+
+pub const ID: [u8; 32] =
+    five8_const::decode_32_const("22222222222222222222222222222222222222222222");
 
 fn process_instruction(
     _program_id: &Pubkey,
