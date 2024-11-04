@@ -1,10 +1,11 @@
-use chrono::Utc;
 use pinocchio::{
     account_info::AccountInfo,
     instruction::{Seed, Signer},
-    ProgramResult,
+    sysvars::{clock::Clock, Sysvar},
+    ProgramResult, msg,
 };
-use pinocchio_token::state::TokenAccount;
+
+use pinocchio_token::{state::TokenAccount, instructions::Transfer};
 
 use crate::state::{Contributor, Fundraiser};
 
@@ -20,10 +21,10 @@ pub fn refund(accounts: &[AccountInfo], bump: [u8; 1]) -> ProgramResult {
     let fundraiser_account = Fundraiser::from_account_info(fundraiser);
 
     // Make sure that the time elapsed
-    let current_time = Utc::now().timestamp();
-    assert!(fundraiser_account.time_ending() < current_time);
+    let current_time = Clock::get()?.unix_timestamp;
+    assert!(fundraiser_account.time_ending() >= current_time);
 
-    // Make sure that we didn0t reach the goal
+    // // Make sure that we didn0t reach the goal
     let vault_account = unsafe { TokenAccount::from_account_info_unchecked_unsafe(vault) };
     assert!(fundraiser_account.amount_to_raise() > vault_account.amount());
     assert_eq!(fundraiser_account.mint_to_raise(), vault_account.mint());
@@ -31,7 +32,7 @@ pub fn refund(accounts: &[AccountInfo], bump: [u8; 1]) -> ProgramResult {
     let seeds = [Seed::from(fundraiser.key().as_ref()), Seed::from(&bump)];
     let signer = [Signer::from(&seeds)];
 
-    pinocchio_token::instructions::Transfer {
+    Transfer {
         from: vault,
         to: contributor_ta,
         authority: vault,

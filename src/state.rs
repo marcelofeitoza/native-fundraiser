@@ -3,12 +3,13 @@ use pinocchio::{account_info::AccountInfo, pubkey::Pubkey};
 /// # State
 ///
 /// Contributor:
+/// > Contributor: Pubkey
 /// > Amount: u64
 
 pub struct Contributor(*const u8);
 
 impl Contributor {
-    pub const LEN: usize = 8;
+    pub const LEN: usize = 40;
 
     #[inline(always)]
     pub fn from_account_info_unchecked(account_info: &AccountInfo) -> Self {
@@ -21,8 +22,12 @@ impl Contributor {
         Self::from_account_info_unchecked(account_info)
     }
 
+    pub fn contributor(&self) -> Pubkey {
+        unsafe { *(self.0 as *const Pubkey) }
+    }
+
     pub fn amount(&self) -> u64 {
-        unsafe { core::ptr::read_unaligned(self.0.add(64) as *const u64) }
+        unsafe { core::ptr::read_unaligned(self.0.add(32) as *const u64) }
     }
 }
 

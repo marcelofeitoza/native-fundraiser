@@ -31,17 +31,25 @@ pub fn contribute(accounts: &[AccountInfo], data: &[u8]) -> ProgramResult {
 
     if contributor_account.data_len() != 0 {
         unsafe {
-            *(contributor_account.borrow_mut_data_unchecked().as_mut_ptr()
-                as *mut [u8; Contributor::LEN]) =
-                (Contributor::from_account_info(contributor_account).amount() + amount)
-                    .to_le_bytes();
+            // Get a mutable pointer to the account's data once
+            let data_ptr = contributor_account.borrow_mut_data_unchecked().as_mut_ptr();
+    
+            // Calculate the new amount and store it in the correct position (32-byte offset)
+            *(data_ptr.add(32) as *mut [u8; 8]) = (Contributor::from_account_info(contributor_account).amount() + amount).to_le_bytes();
         }
     } else {
         unsafe {
-            *(contributor_account.borrow_mut_data_unchecked().as_mut_ptr()
-                as *mut [u8; Contributor::LEN]) = amount.to_le_bytes();
+            // Get a mutable pointer to the account's data
+            let data_ptr = contributor_account.borrow_mut_data_unchecked().as_mut_ptr();
+    
+            // Store the contributor key at the start (32 bytes)
+            *(data_ptr as *mut [u8; 32]) = *contributor.key();
+    
+            // Store the amount in the next 8 bytes (32-byte offset)
+            *(data_ptr.add(32) as *mut [u8; 8]) = amount.to_le_bytes();
         }
     }
+    
 
     let current_time = Clock::get()?.unix_timestamp;
     assert!(fundraiser_account.time_ending() > current_time);
