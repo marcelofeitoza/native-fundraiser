@@ -3,6 +3,7 @@ use pinocchio::{
     instruction::{Seed, Signer},
     sysvars::{clock::Clock, Sysvar},
     ProgramResult,
+    pubkey::Pubkey,
 };
 
 use pinocchio_token::{state::TokenAccount, instructions::Transfer};
@@ -25,7 +26,7 @@ pub fn refund(accounts: &[AccountInfo], bump: [u8; 1]) -> ProgramResult {
     assert!(fundraiser_account.time_ending() >= current_time);
 
     // // Make sure that we didn0t reach the goal
-    let vault_account = TokenAccount::from_account_info(vault)? ;
+    let vault_account = unsafe { TokenAccount::from_account_info_unchecked(vault)? } ;
     assert!(fundraiser_account.amount_to_raise() > vault_account.amount());
     assert_eq!(&fundraiser_account.mint_to_raise(), vault_account.mint());
 
@@ -41,11 +42,12 @@ pub fn refund(accounts: &[AccountInfo], bump: [u8; 1]) -> ProgramResult {
     .invoke_signed(&signer)?;
 
     unsafe {
-        let lamports = contributor_account.borrow_lamports_unchecked();
-        *(contributor_account.borrow_mut_lamports_unchecked()) -= lamports;
-        *(contributor.borrow_mut_lamports_unchecked()) += lamports;
+        *contributor.borrow_mut_lamports_unchecked() += *contributor_account.borrow_lamports_unchecked();
+        *contributor_account.borrow_mut_lamports_unchecked() = 0;
 
-        contributor.realloc(0, true)?;
+        contributor_account.assign(&Pubkey::default());
+
+        *(contributor_account.borrow_mut_data_unchecked().as_mut_ptr().sub(8) as *mut u64) = 0;
     }
 
     Ok(())

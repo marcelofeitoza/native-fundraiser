@@ -19,53 +19,20 @@ mod tests {
             "22222222222222222222222222222222222222222222",
         ));
 
-        let mut mollusk = Mollusk::new(&program_id, "target/deploy/fundraiser");
-
-        mollusk.add_program(
-            &spl_token::ID,
-            "src/tests/spl_token-3.5.0",
-            &mollusk_svm::program::loader_keys::LOADER_V3,
-        );
-
-        let (token_program, token_program_account) = (
-            spl_token::ID,
-            program::create_program_account_loader_v3(&spl_token::ID),
-        );
+        let mollusk = Mollusk::new(&program_id, "target/deploy/fundraiser");
 
         // Accounts
         let fundraiser = Pubkey::new_unique();
-        let mint = Pubkey::new_unique();
-        let (vault, bump) = Pubkey::find_program_address(&[&fundraiser.to_bytes()], &program_id);
 
         // Data
         let data = [
             vec![0],
-            vec![bump],
-            Pubkey::new_unique().to_bytes().to_vec(),
+            Pubkey::default().to_bytes().to_vec(),
+            Pubkey::default().to_bytes().to_vec(),
             i64::MAX.to_le_bytes().to_vec(),
             1_000_000u64.to_le_bytes().to_vec(),
         ]
         .concat();
-
-        let mut mint_account = AccountSharedData::new(
-            mollusk
-                .sysvars
-                .rent
-                .minimum_balance(spl_token::state::Mint::LEN),
-            spl_token::state::Mint::LEN,
-            &token_program,
-        );
-        solana_sdk::program_pack::Pack::pack(
-            spl_token::state::Mint {
-                mint_authority: COption::None,
-                supply: 1_000_000,
-                decimals: 6,
-                is_initialized: true,
-                freeze_authority: COption::None,
-            },
-            mint_account.data_as_mut_slice(),
-        )
-        .unwrap();
 
         // Instruction
         let instruction = Instruction::new_with_bytes(
@@ -73,9 +40,6 @@ mod tests {
             &data,
             vec![
                 AccountMeta::new(fundraiser, true),
-                AccountMeta::new_readonly(mint, false),
-                AccountMeta::new(vault, false),
-                AccountMeta::new_readonly(token_program, false),
             ],
         );
 
@@ -93,19 +57,6 @@ mod tests {
                         &program_id,
                     ),
                 ),
-                (mint, mint_account),
-                (
-                    vault,
-                    AccountSharedData::new(
-                        mollusk
-                            .sysvars
-                            .rent
-                            .minimum_balance(spl_token::state::Account::LEN),
-                        spl_token::state::Account::LEN,
-                        &spl_token::ID,
-                    ),
-                ),
-                (token_program, token_program_account),
             ],
             &[Check::success()],
         );
@@ -136,12 +87,11 @@ mod tests {
         let fundraiser = Pubkey::new_unique();
         let contributor_account = Pubkey::new_unique();
         let contributor_ta = Pubkey::new_unique();
-        let (vault, bump) = Pubkey::find_program_address(&[&fundraiser.to_bytes()], &program_id);
+        let vault = Pubkey::new_unique();
 
         // Data
         let data = [
             vec![1],
-            vec![bump],
             1_000u64.to_le_bytes().to_vec(),
         ]
         .concat();
@@ -202,6 +152,7 @@ mod tests {
             &[
                 Pubkey::default().to_bytes().to_vec(),
                 Pubkey::default().to_bytes().to_vec(),
+                vault.to_bytes().to_vec(),
                 i64::MAX.to_le_bytes().to_vec(),
                 1_000_000u64.to_le_bytes().to_vec(),
             ]
@@ -270,15 +221,12 @@ mod tests {
         let cranker = Pubkey::new_unique();
         let maker = Pubkey::new_unique();
         let fundraiser = Pubkey::new_unique();
-        let (vault, bump) = Pubkey::find_program_address(&[&fundraiser.to_bytes()], &program_id);
+        let vault = Pubkey::new_unique();
         let maker_ta = Pubkey::new_unique();
+        let (authority, bump) = Pubkey::find_program_address(&[&fundraiser.to_bytes()], &program_id);
 
         // Data
-        let data = [
-            vec![2],
-            vec![bump],
-        ]
-        .concat();
+        let data = [2, bump];
 
         let mut vault_account = AccountSharedData::new(
             mollusk
@@ -291,7 +239,7 @@ mod tests {
         solana_sdk::program_pack::Pack::pack(
             spl_token::state::Account {
                 mint: Pubkey::default(),
-                owner: vault,
+                owner: authority,
                 amount: 1_000_000,
                 delegate: COption::None,
                 state: spl_token::state::AccountState::Initialized,
@@ -336,6 +284,7 @@ mod tests {
             &[
                 Pubkey::default().to_bytes().to_vec(),
                 maker.to_bytes().to_vec(),
+                vault.to_bytes().to_vec(),
                 i64::MAX.to_le_bytes().to_vec(),
                 1_000_000u64.to_le_bytes().to_vec(),
             ]
@@ -351,6 +300,7 @@ mod tests {
                 AccountMeta::new(fundraiser, false),
                 AccountMeta::new(vault, false),
                 AccountMeta::new(maker_ta, false),
+                AccountMeta::new(authority, false),
                 AccountMeta::new_readonly(token_program, false),
             ],
         );
@@ -362,6 +312,7 @@ mod tests {
                 (fundraiser, fundraiser_account),
                 (vault, vault_account),
                 (maker_ta, maker_ta_account),
+                (authority, AccountSharedData::new(1_000_000_000, 0, &Pubkey::default())),
                 (token_program, token_program_account),
             ],
             &[Check::success()],
@@ -392,14 +343,11 @@ mod tests {
         let fundraiser = Pubkey::new_unique();
         let contributor_account = Pubkey::new_unique();
         let contributor_ta = Pubkey::new_unique();
-        let (vault, bump) = Pubkey::find_program_address(&[&fundraiser.to_bytes()], &program_id);
+        let vault = Pubkey::new_unique();
+        let (authority, bump) = Pubkey::find_program_address(&[&fundraiser.to_bytes()], &program_id);
 
         // Data
-        let data = [
-            vec![3],
-            vec![bump],
-        ]
-        .concat();
+        let data = [3, bump];
 
         let mut vault_account = AccountSharedData::new(
             mollusk
@@ -412,7 +360,7 @@ mod tests {
         solana_sdk::program_pack::Pack::pack(
             spl_token::state::Account {
                 mint: Pubkey::default(),
-                owner: vault,
+                owner: authority,
                 amount: 1_000,
                 delegate: COption::None,
                 state: spl_token::state::AccountState::Initialized,
@@ -457,6 +405,7 @@ mod tests {
             &[
                 Pubkey::default().to_bytes().to_vec(),
                 Pubkey::default().to_bytes().to_vec(),
+                vault.to_bytes().to_vec(),
                 0i64.to_le_bytes().to_vec(),
                 1_000_000u64.to_le_bytes().to_vec(),
             ]
@@ -488,6 +437,7 @@ mod tests {
                 AccountMeta::new(fundraiser, false),
                 AccountMeta::new(contributor_account, false),
                 AccountMeta::new(contributor_ta, false),
+                AccountMeta::new(authority, false),
                 AccountMeta::new(vault, false),
                 AccountMeta::new_readonly(token_program, false),
             ],
@@ -500,6 +450,7 @@ mod tests {
                 (fundraiser, fundraiser_account),
                 (contributor_account, contributor_account_account),
                 (contributor_ta, contributor_ta_account),
+                (authority, AccountSharedData::new(1_000_000_000, 0, &Pubkey::default())),
                 (vault, vault_account),
                 (token_program, token_program_account),
             ],
