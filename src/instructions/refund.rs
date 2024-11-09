@@ -2,10 +2,10 @@ use pinocchio::{
     account_info::AccountInfo,
     instruction::{Seed, Signer},
     sysvars::{clock::Clock, Sysvar},
-    ProgramResult, msg,
+    ProgramResult,
 };
 
-use pinocchio_token::{state::TokenAccount, instructions::Transfer};
+use pinocchio_token::{instructions::Transfer, state::TokenAccount};
 
 use crate::state::{Contributor, Fundraiser};
 
@@ -25,7 +25,7 @@ pub fn refund(accounts: &[AccountInfo], bump: [u8; 1]) -> ProgramResult {
     assert!(fundraiser_account.time_ending() >= current_time);
 
     // // Make sure that we didn0t reach the goal
-    let vault_account = unsafe { TokenAccount::from_account_info_unchecked_unsafe(vault) };
+    let vault_account = unsafe { TokenAccount::from_account_info_unchecked(vault)? };
     assert!(fundraiser_account.amount_to_raise() > vault_account.amount());
     assert_eq!(fundraiser_account.mint_to_raise(), vault_account.mint());
 
