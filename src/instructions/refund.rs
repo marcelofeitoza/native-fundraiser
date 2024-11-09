@@ -42,8 +42,8 @@ pub fn refund(accounts: &[AccountInfo], bump: [u8; 1]) -> ProgramResult {
 
     unsafe {
         let lamports = contributor_account.borrow_lamports_unchecked();
-        *(contributor_account.borrow_mut_lamports_unchecked()) -= lamports;
-        *(contributor.borrow_mut_lamports_unchecked()) += lamports;
+        *contributor.borrow_mut_lamports_unchecked() += lamports;
+        *contributor_account.borrow_mut_lamports_unchecked() -= lamports;
 
         // contributor.realloc(0, true)?;
     }
